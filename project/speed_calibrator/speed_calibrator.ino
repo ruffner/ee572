@@ -201,20 +201,20 @@ void setup() {
   Timer1.initialize(1000);
   Timer1.attachInterrupt(checkSensor);
 
-  //generateLookupTable();
-  generateTSV();
+  generateLookupTable();
+  //generateTSV();
 }
 
 void generateLookupTable() {
   int trials = 10;
-  int baseRPM = 80;
+  int baseRPM = 75;
   int maxRPM = 255;
 
   analogWrite(MOTOR, baseRPM);
 
-  Serial.print("float RPMMap[");Serial.print(maxRPM-baseRPM);Serial.println("] = {");
+  Serial.print("float RPMMap[");Serial.print((maxRPM-baseRPM)/5);Serial.println("] = {");
 
-  for( int pwmValue = baseRPM; pwmValue <= maxRPM; pwmValue++ ){
+  for( int pwmValue = baseRPM; pwmValue <= maxRPM; pwmValue+=5 ){
     analogWrite(MOTOR, pwmValue);
 
     float avgRPM = 0;
