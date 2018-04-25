@@ -1,3 +1,12 @@
+% Alex Mueller
+% Galvin Greene, Ben Cummins, Matt Ruffner
+% EE 572 Final Project Simulation
+
+% Purpose: To simulate our 1st order type zero system when
+% subject to ramp and step inputs. Also we wish to compute PID parameters
+% and discrete time compensator filter parameters
+% to form the compensated system for simulation and programing of the system.
+
 close all
 
 syms s
@@ -91,14 +100,14 @@ title('Ramp Response of System After Compensation')
 ylabel('RPM')
 
 
-% descretize system
+% discretize system
 syms z
 s = (z-1)/Ts; % use rectanglar estimation holding from left side
 H_z = subs(gpid/(1+gpid));
 [symNum,symDen] = numden(H_z); %Get num and den of Symbolic TF
 TFnum = sym2poly(symNum);    %Convert Symbolic num to polynomial
 TFden = sym2poly(symDen);    %Convert Symbolic den to polynomial
-H_z_tf =tf(TFnum,TFden,Ts)
+H_z_tf =tf(TFnum,TFden,Ts);
 [num,den,Ts1] = tfdata(H_z_tf,'v');
 
 % assign filter coefficients
