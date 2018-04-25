@@ -35,7 +35,7 @@ title('Step Response of System Before Compensation')
 ylabel('RPM')
 
 %generate a ramp input
-len = 50;
+len =85;
 u1 = ones(1,len);
 for i = 1:len
     u1(i) = 10*i*u1(i);
@@ -80,6 +80,17 @@ step(H2b)
 title('Step Response of System After Compensation')
 ylabel('RPM')
 
+y2 = lsim(H2b,u1,t,x0,'zoh');
+% plot simulation
+figure
+plot(t,y2,t,u1)
+%ylim([-.1 2000])
+%xlim([0 2])
+legend('System Response','Ramp Input')
+title('Ramp Response of System After Compensation')
+ylabel('RPM')
+
+
 % descretize system
 syms z
 s = (z-1)/Ts; % use rectanglar estimation holding from left side
@@ -87,7 +98,7 @@ H_z = subs(gpid/(1+gpid));
 [symNum,symDen] = numden(H_z); %Get num and den of Symbolic TF
 TFnum = sym2poly(symNum);    %Convert Symbolic num to polynomial
 TFden = sym2poly(symDen);    %Convert Symbolic den to polynomial
-H_z_tf =tf(TFnum,TFden,Ts);
+H_z_tf =tf(TFnum,TFden,Ts)
 [num,den,Ts1] = tfdata(H_z_tf,'v');
 
 % assign filter coefficients
