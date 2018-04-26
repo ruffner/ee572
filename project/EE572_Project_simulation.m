@@ -101,7 +101,7 @@ ylabel('RPM')
 
 % discretize system
 syms z
-s = (z-1)/(z*Ts); % use rectanglar estimation holding from left side
+s = (z-1)/(z*Ts); % use rectanglar estimation holding from right side
 H_z = subs(gpid);
 [symNum,symDen] = numden(H_z); %Get num and den of Symbolic TF
 TFnum = sym2poly(symNum);    %Convert Symbolic num to polynomial
