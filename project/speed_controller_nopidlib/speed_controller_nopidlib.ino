@@ -186,23 +186,13 @@ PROGMEM float RPMMap[175] = {
 
 
 unsigned long lastFreqUpdate = 0;
-
 float rpm = 0;
 int state = 0;
 unsigned long lastLowTime = 0;
 volatile unsigned long diffTime = 0;
 
 // PID PARAMETERS
-//Define Variables we'll be connecting to
 double Setpoint, Input, Output;
-
-//Define the aggressive and conservative Tuning Parameters
-double aggKp=4, aggKi=0.2, aggKd=1;
-double consKp=1, consKi=0.05, consKd=0.25;
-
-//Specify the links and initial tuning parameters
-//PID myPID(&Input, &Output, &Setpoint, .0375, .1486, .0024, DIRECT);
-//float a0,a1,a2,b0,b1,b2,yk,yk_minus1,yk_minus2,wk,wk_minus1,wk_minus2;
 
 float yk=0.0;
 float yk_minus1=0.0;
@@ -218,18 +208,23 @@ float a1=41.8514;
 float a2=-42.2235;
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(A9, INPUT);
-  pinMode(6, OUTPUT);
+  // PIN DIRECTION DEFINITIONS
+  pinMode(IRPIN, INPUT);
+  pinMode(MOTOR, OUTPUT);
+  pinMode(13, OUTPUT); // LED
 
   Serial.begin(115200);
   delay(2000);
 
+  // 1 MILLISECOND SAMPLING PERIOD REQUIRED TO GET ACCURATE
+  // RPM SENSING
   Timer1.initialize(1000);
+  // ISR CALLBACK
   Timer1.attachInterrupt(checkSensor);
+  // TIMESTAMP FOR RPM SENSING
   lastLowTime = millis();
 
-  
+  // INITIAL LOW MOTOR SPEED
   analogWrite(MOTOR, 80);
 
   unsigned long n=millis();
@@ -239,18 +234,14 @@ void setup() {
     digitalWrite(13, LOW);
   }
 
+  // INITIAL TARGET RPM OF 300
+  Setpoint = map(300,200,800,0,255); 
 
-  //initialize the variables we're linked to
-  Input = map(rpm,200,800,0,255);
-  Setpoint = map(300,200,800,0,255); // target rpm=500
-
-  
-
-  //turn the PID on
-//  myPID.SetMode(AUTOMATIC);
-  
+  wk=map(rpm,200,800,0,255);
 }
 
+// 3 STATE THRESHOLD BASED RPM SENSING FOR
+// ANALOG REFLECTANCE SENSOR
 void checkSensor() {
   int val = analogRead(IRPIN) >> 5;
   if( state == 0 ){
@@ -272,14 +263,8 @@ void checkSensor() {
 
 
 void loop() {
-    wk=abs(Setpoint-yk);
-    Serial.print("wk ");
-    Serial.println(wk);
-    yk=(b0*wk+b1*wk_minus1+b2*wk_minus2-a1*yk_minus1-a2*yk_minus2)/(a0);
-    Serial.print("yk ");
-    Serial.println(yk);
-    Output=yk;
-
+  
+  // RUN CODE INSIDE THIS IF EVERY 100 MILLISECONDS (Ts)
   if( millis() - 100 > lastFreqUpdate ){
     if( Serial.available() ){
       //analogWrite(MOTOR, Serial.parseInt());
@@ -290,18 +275,20 @@ void loop() {
       Serial.print("New setpoint (mapped): ");
       Serial.println(Setpoint);
     }
-  
+    
+    // UPDATE TIMESTAMP TO KEEP TRACK OF Ts
     lastFreqUpdate = millis();
     unsigned long temp = 0;
+    // ATOMIC READ OF VOLATILE VARIABLE INSIDE ISR
     noInterrupts();
     temp = diffTime;
     interrupts();
-  
+
+    // COMPUTE CURRENT RPM
     float rotFreq = 1.0/(2.0*(float)(diffTime)*0.001);
     rpm = rotFreq * 60;
 
     Serial.println();
-
     Serial.print("Target: ");
     Serial.println(Setpoint);
     Serial.print("Target rpm: ");
@@ -309,43 +296,41 @@ void loop() {
     
     Serial.print("Current rpm: ");
     Serial.println(rpm);
-  
-    //if( abs(Input-rpm) <10 ){
-      Input = map(rpm,200,800,0,255);
-    //}
-    
-    //double gap = abs(Setpoint-Input); //distance away from setpoint
 
-    
-//    myPID.Compute();
+    // MAP THE CURRENT RPM TO AN 8 BIT UNSIGNED VALUE
+    Input = map(rpm,200,800,0,255);
 
+    // SET THE INPUT
+    //wk=abs(Setpoint-yk);
+    wk=Input;
+    Serial.print("Current wk: ");
+    Serial.println(wk);
+
+    // COMPUTE THE OUTPUT
+    yk=(b0*wk+b1*wk_minus1+b2*wk_minus2-a1*yk_minus1-a2*yk_minus2)/(a0);
+    Output=yk;
+
+    // COMPUTE TARGET OUTPUT RPM BASED ON 8 BIT OUTPUT VALUE
     double targetRPM = map(Output,0,255,200,800);
 
-    Serial.print("new output: ");
+    Serial.print("new output (yk): ");
     Serial.println(Output);
-    Serial.print("mapped output: ");
+    Serial.print("new output (rpm): ");
     Serial.println(targetRPM);
 
-    // find pwm associated with target rpm
+    // LOOKUP TARGET RPM
     for( int i=0;i<174;i++ ){
       if( RPMMap[i] < targetRPM && RPMMap[i+1] > targetRPM ){
+        // DRIVE MOTOR AT NEW SPEED
         analogWrite(MOTOR, i+80);
       }
     }
-    
+
+    // UPDATE INPUT/OUTPUT STATE VARIABLES
     wk_minus2=wk_minus1;
-    Serial.print("wk_minus2: ");
-    Serial.println(wk_minus2);
     wk_minus1=wk;
-    Serial.print("wk_minus1: ");
-    Serial.println(wk_minus1);
     yk_minus2=yk_minus1;
-    Serial.print("yk_minus2: ");
-    Serial.println(yk_minus2);
     yk_minus1=yk;
-    Serial.print("yk_minus1: ");
-    Serial.println(yk_minus1);
-    delay(300);
   }
 
 }
