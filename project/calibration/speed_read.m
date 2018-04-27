@@ -4,18 +4,23 @@ s.BaudRate = 115200;
 
 fopen(s);
 
-%fprintf(s,"%d",500);
+%fprintf(s,"%d",300);
+
+rpm=300;
 
 i=1;
 while (i<250)
 
-    if i==50
-       fprintf(s,"%d",750);
-    end
-    
-    if i==175
-        fprintf(s,"%d",350);
-    end
+%     if i==50
+%        fprintf(s,"%d",750);
+%     end
+%     
+%     if i==175
+%         fprintf(s,"%d",350);
+%     end
+
+    %fprintf(s,"%d",rpm);
+    %rpm=rpm+3;
     
     sSerialData = fscanf(s); %read sensor
     flushinput(s);

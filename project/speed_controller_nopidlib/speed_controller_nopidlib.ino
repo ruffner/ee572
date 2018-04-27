@@ -78,6 +78,9 @@ float a0=1.0;
 float a1=-1.0;
 float a2=0.0;
 
+unsigned long startTime = 0;
+
+
 void setup() {
   // PIN DIRECTION DEFINITIONS
   pinMode(IRPIN, INPUT);
@@ -111,6 +114,8 @@ void setup() {
   Setpoint = 300;
 
   wk=rpm;
+
+  startTime = millis();
 }
 
 // 3 STATE THRESHOLD BASED RPM SENSING FOR
@@ -142,6 +147,10 @@ void loop() {
     if( Serial.available() ){
       Setpoint = Serial.parseInt();
     }
+
+    // UNCOMMENT TO FOLLOW A RAMP
+    // Setpoint = Setpoint + 3;
+    // if( Setpoint > 800 ) Setpoint = 800;
     
     // UPDATE TIMESTAMP TO KEEP TRACK OF Ts
     lastFreqUpdate = millis();
