@@ -171,7 +171,7 @@ void loop() {
 
     // LOOKUP TARGET RPM
     for( int i=0;i<174;i++ ){
-      if( RPMMap[i] < targetRPM && RPMMap[i+1] > targetRPM ){
+      if( RPMMap[i] <= targetRPM && RPMMap[i+1] > targetRPM ){
         // DRIVE MOTOR AT NEW SPEED
         analogWrite(MOTOR, i+81);
       }
