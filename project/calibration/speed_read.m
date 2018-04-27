@@ -1,14 +1,25 @@
 clear;
-s=serial('/dev/ttyACM0');
+s=serial('COM18');
 s.BaudRate = 115200;
 
 fopen(s);
 
+%fprintf(s,"%d",500);
+
 i=1;
-while (i<2000)
+while (i<250)
+
+    if i==50
+       fprintf(s,"%d",750);
+    end
+    
+    if i==175
+        fprintf(s,"%d",350);
+    end
+    
     sSerialData = fscanf(s); %read sensor
     flushinput(s);
-    t = strsplit(sSerialData,','); % same character as the Arduino code
+    t = strsplit(sSerialData,'\t'); % same character as the Arduino code
     mData(i,1) = str2double(t(1)); 
     mData(i,2) = str2double(t(2));
     mData(i,3) = str2double(t(3)); 
@@ -24,7 +35,14 @@ fclose(s);
 delete(s);
 clear s;
 
+Ts=.1;
+tax=0:Ts:25-2*Ts;
+tax=tax';
 
 figure(1)
-plot(mData(:,1),mData(:,2:4));
-legend('Target RPM','Actual RPM','W_k','Y_k')
+plot(tax,mData(:,1:2));
+legend('Target RPM','Actual RPM')
+
+figure(2)
+plot(tax,mData(:,3:4));
+legend('W_k','Y_k');
